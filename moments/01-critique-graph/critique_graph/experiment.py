@@ -9,14 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from agentic.graph import Checkpoint, StepLimit
-from agentic.llm import LLM, LLMError, Usage
+from agentic.llm import LLM, PRICES, LLMError, Usage
 from critique_graph.graphs import build
 from critique_graph.sandbox import run_tests
 from critique_graph.schema import State
 from critique_graph.tasks import Task
-
-# $ per million tokens (input, output) — for estimates only.
-PRICES = {"claude-opus-5-5": (4.00, 20.00), "claude-sonnet-5-5": (2.00, 10.00), "claude-haiku-4-5": (1.00, 5.00)}
 
 
 @dataclass

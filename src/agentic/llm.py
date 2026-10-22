@@ -6,8 +6,10 @@ not free text: the schema is the contract between nodes.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol, TypeVar
 
 import anthropic
@@ -18,7 +20,15 @@ T = TypeVar("T", bound=BaseModel)
 DEFAULT_MODEL = "claude-opus-5-5"
 # Server-side refusal fallbacks (`fallbacks: "default"`) on the Claude API.
 _FALLBACKS = {"claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude-sonnet-5-5"}
-_EFFORT = _FALLBACKS | {"claude-sonnet-5"}
+_EFFORT = _FALLBACKS | {"claude-sonnet-5", "claude-haiku-5-5"}
+
+# $ per million tokens (input, output) — for estimates only.
+PRICES = {
+    "claude-opus-5-5": (4.00, 20.00),
+    "claude-sonnet-5-5": (2.00, 10.00),
+    "claude-haiku-5-5": (0.10, 0.50),
+    "claude-haiku-4-5": (1.00, 5.00),
+}
 
 
 @dataclass
@@ -35,6 +45,13 @@ class Usage:
 
 class LLMError(Exception):
     """The model declined (refusal) or returned something that doesn't fit the schema."""
+
+
+def has_credentials() -> bool:
+    """An API key or token in the environment, or a profile from `ant auth login`."""
+    if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"):
+        return True
+    return (Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "anthropic").is_dir()
 
 
 class LLM(Protocol):
