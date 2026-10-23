@@ -22,6 +22,7 @@ jobs:
       - run: uv sync --locked
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      # Offline only: no API key, no calls to Claude, no cost.
+      # Offline only: no API keys, no calls to Claude or Jev, no cost.
       - run: uv run pytest -q
       - run: uv run critique-graph demo
+      - run: uv run jev-cascade demo

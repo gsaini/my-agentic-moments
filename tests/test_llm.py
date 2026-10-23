@@ -5,7 +5,7 @@ import httpx2
 import pytest
 from pydantic import BaseModel
 
-from agentic.llm import ClaudeLLM, LLMError, ScriptedLLM
+from agentic.llm import ClaudeLLM, LLMError, ScriptedLLM, has_credentials
 
 
 class Verdict(BaseModel):
@@ -59,6 +59,26 @@ def test_models_without_effort_or_fallbacks():
     ClaudeLLM("claude-haiku-4-5", client=fake_api(captured)).ask(role="x", system="s", prompt="p", schema=Verdict)
     assert "fallbacks" not in captured["body"] and captured["beta"] is None
     assert "effort" not in captured["body"].get("output_config", {})
+
+
+def test_haiku_5_5_takes_effort_but_has_no_server_side_fallback():
+    captured: dict = {}
+    llm = ClaudeLLM("claude-haiku-5-5", effort="low", client=fake_api(captured))
+    llm.ask(role="x", system="s", prompt="p", schema=Verdict)
+    assert captured["body"]["output_config"]["effort"] == "low"  # its default is medium; be explicit
+    assert "fallbacks" not in captured["body"] and captured["beta"] is None
+
+
+def test_credentials_from_the_environment_or_a_profile(monkeypatch, tmp_path):
+    for name in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    assert not has_credentials()
+    (tmp_path / "anthropic").mkdir()  # what `ant auth login` leaves behind
+    assert has_credentials()
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "elsewhere"))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    assert has_credentials()
 
 
 def test_scripted_llm_checks_its_script():

@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 import time
 from pathlib import Path
 
-from agentic.llm import DEFAULT_MODEL, ClaudeLLM
+from agentic.llm import DEFAULT_MODEL, ClaudeLLM, has_credentials
 from critique_graph.demo import demo_llm
 from critique_graph.experiment import run_experiment, run_one, scoreboard
 from critique_graph.graphs import DESCRIPTIONS, build
@@ -60,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Checkpoints: {args.out / 'roman-G3.jsonl'}")
         return 0
 
-    if not _has_credentials():
+    if not has_credentials():
         print(NO_CREDENTIALS)
         return 2
     if args.cmd == "run":
@@ -91,12 +90,6 @@ def main(argv: list[str] | None = None) -> int:
 def _model_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--model", default=DEFAULT_MODEL)
     p.add_argument("--effort", default="medium", help="low | medium | high | xhigh | max")
-
-
-def _has_credentials() -> bool:
-    if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"):
-        return True
-    return (Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "anthropic").is_dir()
 
 
 if __name__ == "__main__":
